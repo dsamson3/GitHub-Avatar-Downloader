@@ -1,7 +1,8 @@
 var request = require('request');
 var fs = require('fs');
 var getToken = require('./secrets');
-
+var repoOwner = process.argv[2];
+var repoName = process.argv[3];
 console.log('Welcome to GitHub Avatar Downloader!');
 
 function getRepoContributors(repoOwner, repoName, cb) {
@@ -30,15 +31,31 @@ function downloadImageByURL(url, filePath) {
   .on('response', function(response){
 
   })
-    .pipe(fs.createWriteStream("avatar/" + filePath + ".png"));
+    .pipe(fs.createWriteStream("avatars/" + filePath + ".png"));
 
     } 
-getRepoContributors("jquery", "jquery", function (err, results, downloadImageCb) {
-    console.log("Error: ", err);
+getRepoContributors(repoOwner, repoName, function (err, results, downloadImageCb) {
+    if(repoOwner === undefined || repoName === undefined){
+        console.log("Need more arguments")
+        return 0;
+    } if(process.argv > 4){
+        console.log("Too Many arguments")
+        return 0;
+    } if(err !== null){
+        console.log("Errors; ", err);
+        return 0;
+    }
     arrayOfContributorsObj = JSON.parse(results);
-    console.log(arrayOfContributorsObj);
+    if(arrayOfContributorsObj === "Bad credentials"){
+        console.log("Bad credentials");
+        return 0;
+    }
+    if (!fs.existsSync('avatars/')){
+        fs.mkdirSync('avatars/');
+      }
+    var filePath = "avatars/"
     arrayOfContributorsObj.forEach(function(contributor){
-    downloadImageCb(contributor.avatar_url, contributor.login);
+    downloadImageCb(contributor.avatar_url,contributor.login);
     }
 );
 }
